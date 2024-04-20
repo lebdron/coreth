@@ -175,6 +175,7 @@ func (b *Block) ID() ids.ID { return b.id }
 
 // Accept implements the snowman.Block interface
 func (b *Block) Accept(context.Context) error {
+	log.Debug("Block::Accept", "number", b.ethBlock.Number())
 	vm := b.vm
 
 	// Although returning an error from Accept is considered fatal, it is good

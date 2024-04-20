@@ -643,7 +643,8 @@ func (pool *LegacyPool) IteratePending(f func(tx *txpool.Transaction) bool) bool
 	defer pool.mu.RUnlock()
 
 	for _, list := range pool.pending {
-		for _, tx := range list.txs.items {
+		items := list.txs.Flatten()
+		for _, tx := range items {
 			if !f(&txpool.Transaction{Tx: tx}) {
 				return false
 			}

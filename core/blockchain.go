@@ -1028,6 +1028,7 @@ func (bc *BlockChain) LastAcceptedBlock() *types.Block {
 //
 // Assumes [bc.chainmu] is not held by the caller.
 func (bc *BlockChain) Accept(block *types.Block) error {
+	log.Debug("BlockChain::Accept", "number", block.Number())
 	bc.chainmu.Lock()
 	defer bc.chainmu.Unlock()
 
@@ -1357,9 +1358,11 @@ func (bc *BlockChain) insertBlock(block *types.Block, writes bool) error {
 	// will be cleaned up in Accept/Reject so we need to ensure an error cannot occur
 	// later in verification, since that would cause the referenced root to never be dereferenced.
 	wstart := time.Now()
+	log.Debug("BlockChain::insertBlock start", "number", block.Number())
 	if err := bc.writeBlockAndSetHead(block, receipts, logs, statedb); err != nil {
 		return err
 	}
+	log.Debug("BlockChain::insertBlock end", "number", block.Number())
 	// Update the metrics touched during block commit
 	accountCommitTimer.Inc(statedb.AccountCommits.Milliseconds())   // Account commits are complete, we can mark them
 	storageCommitTimer.Inc(statedb.StorageCommits.Milliseconds())   // Storage commits are complete, we can mark them

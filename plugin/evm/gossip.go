@@ -170,8 +170,12 @@ func (g *GossipEthTxPool) Subscribe(ctx context.Context) {
 
 // Add enqueues the transaction to the mempool. Subscribe should be called
 // to receive an event if tx is actually added to the mempool or not.
-func (g *GossipEthTxPool) Add(tx *GossipEthTx) error {
-	return g.mempool.Add([]*txpool.Transaction{{Tx: tx.Tx}}, false, false)[0]
+func (g *GossipEthTxPool) Add(txs ...*GossipEthTx) []error {
+	wrapped := make([]*txpool.Transaction, len(txs))
+	for i, tx := range txs {
+		wrapped[i] = &txpool.Transaction{Tx: tx.Tx}
+	}
+	return g.mempool.Add(wrapped, false, false)
 }
 
 // Has should just return whether or not the [txID] is still in the mempool,

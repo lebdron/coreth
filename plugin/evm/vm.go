@@ -1111,6 +1111,7 @@ func (vm *VM) initBlockBuilding() error {
 	ethTxPushGossiper := vm.ethTxPushGossiper.Get()
 	if ethTxPushGossiper == nil {
 		ethTxPushGossiper, err = gossip.NewPushGossiper[*GossipEthTx](
+			vm.ctx.Log,
 			ethTxGossipMarshaller,
 			ethTxPool,
 			vm.validators,
@@ -1130,6 +1131,7 @@ func (vm *VM) initBlockBuilding() error {
 
 	if vm.atomicTxPushGossiper == nil {
 		vm.atomicTxPushGossiper, err = gossip.NewPushGossiper[*GossipAtomicTx](
+			vm.ctx.Log,
 			atomicTxGossipMarshaller,
 			vm.mempool,
 			vm.validators,
