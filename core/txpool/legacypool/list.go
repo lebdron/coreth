@@ -37,6 +37,7 @@ import (
 
 	"github.com/ava-labs/coreth/core/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/holiman/uint256"
 	"golang.org/x/exp/slices"
 )
@@ -592,9 +593,36 @@ func (l *pricedList) Removed(count int) {
 func (l *pricedList) Underpriced(tx *types.Transaction) bool {
 	// Note: with two queues, being underpriced is defined as being worse than the worst item
 	// in all non-empty queues if there is any. If both queues are empty then nothing is underpriced.
-	return (l.underpricedFor(&l.urgent, tx) || len(l.urgent.list) == 0) &&
-		(l.underpricedFor(&l.floating, tx) || len(l.floating.list) == 0) &&
+	underpricedForUrgent := l.underpricedFor(&l.urgent, tx)
+	underpricedForFloating := l.underpricedFor(&l.floating, tx)
+	result := (underpricedForUrgent || len(l.urgent.list) == 0) &&
+		(underpricedForFloating || len(l.floating.list) == 0) &&
 		(len(l.urgent.list) != 0 || len(l.floating.list) != 0)
+
+	printLog := func(name string, h *priceHeap) {
+		baseFee := h.baseFee
+		htx := h.list[0]
+		log.Trace(name,
+			"h.baseFee", baseFee,
+			"tx.EffectiveGasTipValue", tx.EffectiveGasTipValue(baseFee),
+			"htx.EffectiveGasTipValue", htx.EffectiveGasTipValue(baseFee),
+			"tx.GasFeeCap", tx.GasFeeCap(),
+			"htx.GasFeeCap", htx.GasFeeCap(),
+			"tx.GasTipCap", tx.GasTipCap(),
+			"htx.GasTipCap", htx.GasTipCap(),
+		)
+	}
+
+	if result {
+		if underpricedForUrgent {
+			printLog("underpricedForUrgent", &l.urgent)
+		}
+		if underpricedForFloating {
+			printLog("underpricedForFloating", &l.floating)
+		}
+	}
+
+	return result
 }
 
 // underpricedFor checks whether a transaction is cheaper than (or as cheap as) the
