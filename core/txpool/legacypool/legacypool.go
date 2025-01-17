@@ -1834,6 +1834,7 @@ func (pool *LegacyPool) updateBaseFeeAt(head *types.Header) error {
 	if err != nil {
 		return err
 	}
+	log.Trace("LegacyPool::updateBaseFeeAt priced.SetBaseFee", "baseFeeEstimate", baseFeeEstimate)
 	pool.priced.SetBaseFee(baseFeeEstimate)
 	return nil
 }

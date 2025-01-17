@@ -229,6 +229,7 @@ func (oracle *Oracle) EstimateBaseFee(ctx context.Context) (*big.Int, error) {
 		return nil, nil
 	}
 
+	log.Trace("Oracle::EstimateBaseFee", "baseFee", baseFee, "nextBaseFee", nextBaseFee)
 	baseFee = math.BigMin(baseFee, nextBaseFee)
 	return baseFee, nil
 }
