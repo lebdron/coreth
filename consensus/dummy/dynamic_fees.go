@@ -13,6 +13,7 @@ import (
 	"github.com/ava-labs/coreth/params"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
+	"github.com/ethereum/go-ethereum/log"
 )
 
 var (
@@ -155,7 +156,12 @@ func CalcBaseFee(config *params.ChainConfig, parent *types.Header, timestamp uin
 		num.Div(num, baseFeeChangeDenominator)
 		baseFeeDelta := math.BigMax(num, common.Big1)
 
+		prevBaseFee := new(big.Int).Set(baseFee)
 		baseFee.Add(baseFee, baseFeeDelta)
+		log.Trace("totalGas > parentGasTarget", "totalGas", totalGas, "parentGasTarget", parentGasTarget,
+			"parent.BaseFee", parent.BaseFee, "paentGasTargetBig", parentGasTargetBig,
+			"baseFeeChangeDenominator", baseFeeChangeDenominator, "baseFeeDelta", baseFeeDelta,
+			"prevBaseFee", prevBaseFee, "baseFee", baseFee)
 	} else {
 		// Otherwise if the parent block used less gas than its target, the baseFee should decrease.
 		num.SetUint64(parentGasTarget - totalGas)
@@ -171,7 +177,12 @@ func CalcBaseFee(config *params.ChainConfig, parent *types.Header, timestamp uin
 			// Note: roll/rollupWindow must be greater than 1 since we've checked that roll > rollupWindow
 			baseFeeDelta = new(big.Int).Mul(baseFeeDelta, new(big.Int).SetUint64(roll/rollupWindow))
 		}
+		prevBaseFee := new(big.Int).Set(baseFee)
 		baseFee.Sub(baseFee, baseFeeDelta)
+		log.Trace("totalGas <= parentGasTarget", "totalGas", totalGas, "parentGasTarget", parentGasTarget,
+			"parent.BaseFee", parent.BaseFee, "paentGasTargetBig", parentGasTargetBig,
+			"baseFeeChangeDenominator", baseFeeChangeDenominator, "baseFeeDelta", baseFeeDelta,
+			"prevBaseFee", prevBaseFee, "baseFee", baseFee)
 	}
 
 	// Ensure that the base fee does not increase/decrease outside of the bounds
