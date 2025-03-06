@@ -62,11 +62,7 @@ func newTxGossipHandler[T gossip.Gossipable](
 	// pull gossip requests are filtered by validators and are throttled
 	// to prevent spamming
 	validatorHandler := p2p.NewValidatorHandler(
-		p2p.NewThrottlerHandler(
-			handler,
-			p2p.NewSlidingWindowThrottler(throttlingPeriod, throttlingLimit),
-			log,
-		),
+		handler,
 		validators,
 		log,
 	)
