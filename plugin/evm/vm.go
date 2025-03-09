@@ -152,8 +152,6 @@ const (
 	txGossipBloomChurnMultiplier         = 3
 	txGossipTargetMessageSize            = 20 * units.KiB
 	maxValidatorSetStaleness             = time.Minute
-	txGossipThrottlingPeriod             = 10 * time.Second
-	txGossipThrottlingLimit              = 2
 	txGossipPollSize                     = 1
 )
 
@@ -1208,8 +1206,8 @@ func (vm *VM) initBlockBuilding() error {
 			ethTxPool,
 			ethTxGossipMetrics,
 			txGossipTargetMessageSize,
-			txGossipThrottlingPeriod,
-			txGossipThrottlingLimit,
+			vm.config.PullGossipThrottlingPeriod.Duration,
+			vm.config.PullGossipThrottlingLimit,
 			vm.validators,
 		)
 	}
@@ -1225,8 +1223,8 @@ func (vm *VM) initBlockBuilding() error {
 			vm.mempool,
 			atomicTxGossipMetrics,
 			txGossipTargetMessageSize,
-			txGossipThrottlingPeriod,
-			txGossipThrottlingLimit,
+			vm.config.PullGossipThrottlingPeriod.Duration,
+			vm.config.PullGossipThrottlingLimit,
 			vm.validators,
 		)
 	}
