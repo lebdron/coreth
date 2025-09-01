@@ -32,6 +32,8 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+type wsConnWrapper func(*websocket.Conn) *websocket.Conn
+
 // ClientOption is a configuration option for the RPC client.
 type ClientOption interface {
 	applyOption(*clientConfig)
@@ -42,7 +44,8 @@ type clientConfig struct {
 	httpHeaders http.Header
 	httpAuth    HTTPAuth
 
-	wsDialer *websocket.Dialer
+	wsDialer   *websocket.Dialer
+	wsWrapConn wsConnWrapper
 }
 
 func (cfg *clientConfig) initHeaders() {
@@ -66,6 +69,12 @@ func (fn optionFunc) applyOption(opt *clientConfig) {
 func WithWebsocketDialer(dialer websocket.Dialer) ClientOption {
 	return optionFunc(func(cfg *clientConfig) {
 		cfg.wsDialer = &dialer
+	})
+}
+
+func WithWebsocketWrapper(wrapper wsConnWrapper) ClientOption {
+	return optionFunc(func(cfg *clientConfig) {
+		cfg.wsWrapConn = wrapper
 	})
 }
 

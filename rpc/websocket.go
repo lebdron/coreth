@@ -264,6 +264,9 @@ func newClientTransportWS(endpoint string, cfg *clientConfig) (reconnectFunc, er
 			}
 			return nil, hErr
 		}
+		if cfg.wsWrapConn != nil {
+			conn = cfg.wsWrapConn(conn)
+		}
 		return newWebsocketCodec(conn, dialURL, header), nil
 	}
 	return connect, nil
