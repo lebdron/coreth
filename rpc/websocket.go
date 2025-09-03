@@ -264,6 +264,10 @@ func newClientTransportWS(endpoint string, cfg *clientConfig) (reconnectFunc, er
 			}
 			return nil, hErr
 		}
+		if cfg.wsWrapperFactory != nil {
+			wrappers := cfg.wsWrapperFactory(conn)
+			return newWebsocketCodecWithWrappers(conn, dialURL, header, wrappers.ReadJSON, wrappers.WriteJSON), nil
+		}
 		return newWebsocketCodec(conn, dialURL, header), nil
 	}
 	return connect, nil
@@ -295,7 +299,7 @@ type websocketCodec struct {
 	pingReset chan struct{}
 }
 
-func newWebsocketCodec(conn *websocket.Conn, host string, req http.Header) ServerCodec {
+func newWebsocketCodecWithWrappers(conn *websocket.Conn, host string, req http.Header, readJSON func(interface{}) error, writeJSON func(interface{}) error) ServerCodec {
 	conn.SetReadLimit(wsMessageSizeLimit)
 	conn.SetPongHandler(func(appData string) error {
 		conn.SetReadDeadline(time.Time{})
@@ -303,10 +307,10 @@ func newWebsocketCodec(conn *websocket.Conn, host string, req http.Header) Serve
 	})
 
 	encode := func(v interface{}, isErrorResponse bool) error {
-		return conn.WriteJSON(v)
+		return writeJSON(v)
 	}
 	wc := &websocketCodec{
-		jsonCodec: NewFuncCodec(conn, encode, conn.ReadJSON).(*jsonCodec),
+		jsonCodec: NewFuncCodec(conn, encode, readJSON).(*jsonCodec),
 		conn:      conn,
 		pingReset: make(chan struct{}, 1),
 		info: PeerInfo{
@@ -322,6 +326,10 @@ func newWebsocketCodec(conn *websocket.Conn, host string, req http.Header) Serve
 	wc.wg.Add(1)
 	go wc.pingLoop()
 	return wc
+}
+
+func newWebsocketCodec(conn *websocket.Conn, host string, req http.Header) ServerCodec {
+	return newWebsocketCodecWithWrappers(conn, host, req, conn.ReadJSON, conn.WriteJSON)
 }
 
 func (wc *websocketCodec) close() {

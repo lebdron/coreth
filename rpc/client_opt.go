@@ -32,6 +32,17 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// WebsocketWrappers contains functions that wrap the underlying websocket connection's
+// read and write methods. This is used to intercept JSON messages.
+type WebsocketWrappers struct {
+	ReadJSON  func(v interface{}) error
+	WriteJSON func(v interface{}) error
+}
+
+// WebsocketWrapperFactory is a function that takes a websocket connection and returns
+// a WebsocketWrappers struct.
+type WebsocketWrapperFactory func(*websocket.Conn) WebsocketWrappers
+
 // ClientOption is a configuration option for the RPC client.
 type ClientOption interface {
 	applyOption(*clientConfig)
@@ -42,7 +53,8 @@ type clientConfig struct {
 	httpHeaders http.Header
 	httpAuth    HTTPAuth
 
-	wsDialer *websocket.Dialer
+	wsDialer         *websocket.Dialer
+	wsWrapperFactory WebsocketWrapperFactory
 }
 
 func (cfg *clientConfig) initHeaders() {
@@ -66,6 +78,15 @@ func (fn optionFunc) applyOption(opt *clientConfig) {
 func WithWebsocketDialer(dialer websocket.Dialer) ClientOption {
 	return optionFunc(func(cfg *clientConfig) {
 		cfg.wsDialer = &dialer
+	})
+}
+
+// WithWebsocketWrapperFactory configures a factory function that produces wrappers
+// for the underlying websocket connection's ReadJSON and WriteJSON methods.
+// This allows for intercepting messages for logging, metrics, or other purposes.
+func WithWebsocketWrapperFactory(factory WebsocketWrapperFactory) ClientOption {
+	return optionFunc(func(cfg *clientConfig) {
+		cfg.wsWrapperFactory = factory
 	})
 }
 
